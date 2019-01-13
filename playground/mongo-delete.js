@@ -11,7 +11,7 @@ MongoClient.connect('mongodb://localhost:27017/TodoApp', (err,client)=> {
     }
     console.log('Connected to mongoDB server');
     const db = client.db('TodoApp');
-    const obj = new ObjectId("5c396cdbd29e9017c45e531f");
+    const obj = new ObjectID("5c396cdbd29e9017c45e531f");
    db.collection('Users').findOneAndDelete({_id:obj}).then((result) =>{
        console.log(result);
    });
