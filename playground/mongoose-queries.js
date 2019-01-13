@@ -14,7 +14,7 @@ else
        if(user)console.log(user);
        else
         return console.log("user not found");
-    }, e=> console.log(e));
+    }).catch(e=>console.log(e));
 
 // Todo.find({
 //     _id:id

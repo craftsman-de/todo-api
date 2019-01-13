@@ -1,12 +1,13 @@
-let express = require('express');
-let bodyParser = require('body-parser');
+const express = require('express');
+const bodyParser = require('body-parser');
 
-let {mongoose} = require('./db/mongoose');
-let {Todo} = require('./models/todo');
-let {User} = require('./models/user');
+const {ObjectID} = require('mongodb');
+const {mongoose} = require('./db/mongoose');
+const {Todo} = require('./models/todo');
+const {User} = require('./models/user');
 
 let app = express();
-
+const port = process.env.PORT || 3000;
 app.use(bodyParser.json());
 
 app.post('/todos', (req,res)=>{
@@ -19,16 +20,30 @@ app.post('/todos', (req,res)=>{
     });
 });
 
+app.get('/todos/:id', (req,res)=>{
+    let id = req.params.id;
+    if(ObjectID.isValid(id)){
+        Todo.findById(id).then((todo) => {
+            if(todo)
+                res.send( {todo} );
+            else
+                res.status(404).send('No user with that ID found');
+        }).catch(e=>console.log(e));
+    }else
+        res.status(404).send("Invalid ID");
+
+});
+
 app.get('/todos', (req,res)=>{
     Todo.find().then((todos) => {
-        res.send({todos, code:'2312'});
+        res.send({todos});
     }, (e) => {
         res.status(400).send(e);
     });
 });
 
-app.listen(3000, ()=>{
-    console.log('started on port 3000');
+app.listen(port, ()=>{
+    console.log('started on port '+port);
 });
 
 module.exports = {app};
