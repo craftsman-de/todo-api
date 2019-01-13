@@ -45,11 +45,11 @@ app.get('/todos', (req,res)=>{
 app.delete('/todos/:id', (req, res) =>{
     let id = req.params.id;
     if(ObjectID.isValid(id)){
-        Todo.findByIdAndRemove(id).then( (response) =>{
-            if(response){
-                res.status(200).send(response + 'deleted')
+        Todo.findByIdAndRemove(id).then( (todo) =>{
+            if(todo){
+                res.status(200).send ( { todo} )
             }else{
-                res.status(400).send('Couldnt find anything with that id')
+                res.status(404).send('Couldnt find anything with that id')
             }
         }).catch(e=>console.log('Error caught :'+e))
 
