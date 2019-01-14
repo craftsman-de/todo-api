@@ -5,8 +5,8 @@ const {app} = require('../server');
 const {Todo} = require('../models/todo');
 const {ObjectID} = require('mongodb');
 const todos = [
-    {_id:new ObjectID(), text:'first test todo'},
-    {_id:new ObjectID(), text:'second test todo'}
+    {_id:new ObjectID(), text:'first test todo', completed:true, completedAt:new Date().getTime() },
+    {_id:new ObjectID(), text:'second test todo',completed:false, completedAt:null }
 ];
 
 beforeEach( (done) =>{
@@ -120,6 +120,7 @@ describe('POST /todos' , () =>{
 
       it('should return 404 if todo not found', (done) =>{
         let id = new ObjectID().toHexString();
+        
         request(app)
         .delete('/todos/'+id)
         .expect(404)
@@ -132,4 +133,37 @@ describe('POST /todos' , () =>{
         .expect(404)
         .end(done);
      });
+ });
+ describe('PATCH /todos/:id', ()=> {
+    it('should update the todo' , (done) => {
+        let id = todos[0]._id.toHexString();
+        let text = 'Some new todo text';
+        request(app)
+        .patch('/todos/'+id)
+        .send({completed:true,text})
+        .expect(200)
+        .expect((res) =>{
+            expect(res.body.todo.text).toBe(text);
+            expect(res.body.todo.completed).toBe(true);
+            expect(typeof res.body.todo.completedAt).toBe('number');
+        })
+        .end(done);
+    });
+
+    it('should clear completedAt when todo is not completed', (done) => {
+        let id = todos[0]._id.toHexString();
+        request(app)
+        .patch('/todos/'+id)
+        .send({ completed:false })
+        .expect(200)
+        .expect(res =>{
+            expect(res.body.todo.completed).toBe(false);
+            expect(res.body.todo.completedAt).toBe(null);
+        })
+        .end(done);
+
+
+
+
+    });
  });
