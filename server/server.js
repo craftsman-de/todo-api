@@ -4,6 +4,7 @@ require('./config/config');
 const _ = require('lodash');
 const express = require('express');
 const bodyParser = require('body-parser');
+const bcrypt = require('bcryptjs');
 
 const {ObjectID} = require('mongodb');
 const {mongoose} = require('./db/mongoose');
@@ -100,14 +101,50 @@ app.post('/users', (req, res) =>{
        
     }).then((token)=>{
         res.header('x-auth',token).send(user);
-    }).catch(e => res.send(e).status(400));
+    }).catch(e => res.status(400).send(e));
    
 });
 
 
 app.get('/users/me', authenticate, (req,res) => {
-     res.send(req.user)
+    
+    res.send(req.user);
 
+    
+}); // compare password ,hashedpass
+app.post('/users/login', (req, res) =>{
+    let body = _.pick(req.body, ['email', 'password']);
+
+    User.findByCredentials(body.email, body.password).then((user)=> {
+        user.generateAuthToken().then((token)=>{
+            res.header('x-auth',token).send(user);
+        });
+        
+    }).catch(e => { res.status(400).send() })
+
+    // User.findOne({email:req.body.email}, (err1, result) => {
+    //     if(err1){
+    //         return res.status(404).send("Email not found");
+    //     }
+    //     bcrypt.compare(req.body.password,result.password, (err,output)=>{
+    //        if(err){
+    //            return res.send("ERROR" +err);
+    //        }
+    //         if(output)
+    //             res.send(result);
+    //         else{
+    //             res.send('password does not match ');
+    //         }
+    //     });
+    // }).catch( e => res.status(404).send(e));
+});
+
+app.delete('/users/me/token', authenticate, (req,res)=>{
+    req.user.removeToken(req.token).then( () => {
+        res.status(200).send();
+    }, () => {
+        res.status(400).send();
+    });
 });
 
 app.listen(port, ()=>{

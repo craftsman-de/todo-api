@@ -3,17 +3,12 @@ const request = require('supertest');
 
 const {app} = require('../server');
 const {Todo} = require('../models/todo');
+const {User} = require('../models/user');
 const {ObjectID} = require('mongodb');
-const todos = [
-    {_id:new ObjectID(), text:'first test todo', completed:true, completedAt:new Date().getTime() },
-    {_id:new ObjectID(), text:'second test todo',completed:false, completedAt:null }
-];
+const {todos, populateTodos,users,populateUsers} = require('./seed');
 
-beforeEach( (done) =>{
-    Todo.remove({}).then(()=>{
-        return Todo.insertMany(todos);
-    }).then( () => done());
-});
+beforeEach(populateUsers);
+beforeEach(populateTodos);
 
 describe('POST /todos' , () =>{
 
@@ -166,4 +161,140 @@ describe('POST /todos' , () =>{
 
 
     });
+ });
+ describe('GET /users/me' , () => {
+     it('should return user if authenticated', (done) => {
+         request(app)
+         .get('/users/me')
+         .set('x-auth', users[0].tokens[0].token)
+        .expect(200)
+        .expect((res) =>{
+            expect(res.body._id).toBe(users[0]._id.toHexString());
+            expect(res.body.email).toBe(users[0].email);
+        })
+        .end(done);
+        });
+
+        it('should return 401 if not authenticated', (done) => {
+           
+            request(app)
+            .get('/users/me')
+            .set('x-auth', 0)
+            .expect(401)
+            .expect((res) => {
+                expect(res.body).toEqual({});
+            })
+            .end(done);
+        });
+
+ });
+ describe('POST /users', () => {
+     it('should create a user', (done) => {
+         var email = 'example@example.com';
+         var password = '123abdsam';
+
+         request(app)
+         .post('/users')
+         .send({email, password})
+         .expect(200)
+         .expect((res)=>{
+            // console.log(res.headers['x-auth']);
+             expect(res.headers['x-auth']).toBeTruthy();
+             expect(res.body._id).toBeTruthy();
+             expect(res.body.email).toBe(email);
+         })
+         .end( (err) =>{
+             if(err) {
+             return done(err);
+             }
+             User.findOne({email}).then((user)=> {
+                 expect(user).toBeTruthy();
+                 expect(user.password).not.toBe(password);
+                 done();
+             });
+         });
+     });
+
+     it('should return validation errors if request invalid', (done) =>{
+        let password = "asdf";
+        let email = "Joops";
+
+        request(app)
+        .get('/users/')
+        .send({email, password})
+        .expect(404)
+        .end(err => {
+            if(err)
+                done(err);
+            else
+                done();
+        });
+
+     });
+     it('should return an error if email already taken', (done) =>{
+         let useremail = users[0].email;
+         let userpassword = users[0].password;
+       
+        
+            request(app)
+            .post('/users/')
+            .send({email:useremail,password:userpassword})
+            .expect(400)
+            .end(err => {
+                if(err)done(err);
+                else
+                    done();
+            });
+
+    });
+ });
+ describe('POST /users/login', () =>{
+     it('should login a user and return authtoken', done => {
+          let email = users[1].email;
+          let password = users[1].password;
+
+         request(app)
+         .post('/users/login')
+         .send({email,password})
+         .expect(200)
+         .expect((res)=>{
+             expect(res.headers['x-auth']).toBeTruthy();
+             expect(res.body._id).toBeTruthy();
+             expect(res.body.email).toBe(email);
+        })
+        .end((err,res) =>{
+            if(err){
+                return done(err);
+            }
+            User.findOne({email}).then(user => {
+                expect(user.tokens[0]).toMatchObject({
+                    access:'auth',
+                    token: res.headers['x-auth']
+                });
+                done();
+            }).catch(e=>done(e));
+        });
+     });
+     it('should reject invalid login', done => {
+        let email = users[1].email;
+        let password = 'letmei';
+        request(app)
+        .post('/users/login')
+        .send({email,password})
+        .expect(400)
+        .expect(res =>{
+            expect(res.headers['x-auth']).not.toBeTruthy();
+        })
+        .end((err,res) => {
+            if(err)done(err)
+            else {
+                User.findOne({email}).then(user=>{
+                  expect(users.tokens).not.toBeTruthy();  
+                  done();
+                }).catch(e=>done(e))
+                
+               
+            }
+        });
+     });
  });
