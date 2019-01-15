@@ -1,10 +1,13 @@
 let env = process.env.NODE_ENV || 'development';
 
-if(env==='development' ){
-    process.env.PORT = 3000; //localhost:27017
-    process.env.MONGODB_URI = 'mongodb://127.0.0.1:27017/TodoApp';
+if(env==='development' || env ==='test'){
+    let config = require('./config.json');
+    
+    let envConfig = config[env];
 
-}else if(env ==='test'){
-    process.env.PORT = 3000;
-    process.env.MONGODB_URI = 'mongodb://127.0.0.1:27017/TodoAppTest';
+    Object.keys(envConfig).forEach((key)=> {
+        process.env[key]=envConfig[key];
+    });
+    // process.env.PORT = envConfig.PORT;
+    // process.env.MONGODB_URI = envConfig.MONGODB_URI;
 }
