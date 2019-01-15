@@ -12,17 +12,23 @@ const users = [{
     password:'useronepass',
     tokens:[{
         access:'auth',
-        token:jwt.sign({_id:userOneId.toHexString(), access:'auth'}, 'secret sauce')}]
+        token:jwt.sign({_id:userOneId.toHexString(), access:'auth'}, 'secret sauce').toString()}]
         
     },{
      _id:userTwoId,
     email:'userTwo@weaner.com',
-    password:'usertwopass'
+    password:'usertwopass',
+    tokens:[{
+        access:'auth',
+        token:jwt.sign({_id:userTwoId.toHexString(), access:'auth'}, 'secret sauce').toString()}]
+    
 }] 
 
 const todos = [
-    {_id:new ObjectID(), text:'first test todo', completed:true, completedAt:new Date().getTime() },
-    {_id:new ObjectID(), text:'second test todo',completed:false, completedAt:null }
+    {_id:new ObjectID(), text:'first test todo', completed:true,
+     completedAt:new Date().getTime(), _creator:userOneId },
+    {_id:new ObjectID(), text:'second test todo',completed:false,
+     completedAt:null, _creator:userTwoId }
 ];
 
 

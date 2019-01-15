@@ -4,7 +4,8 @@ let {mongoose} = require('../db/mongoose');
 let Todo = mongoose.model('Todo', {
     text:{  type: String, required:true, minlength:10, trim:true },
     completed:{ type: Boolean, default:false},
-    completedAt:{ type: Number , default:null}
+    completedAt:{ type: Number , default:null},
+    _creator:{ required:true, type:mongoose.Schema.ObjectId }
     });
 
 module.exports = {Todo};  
